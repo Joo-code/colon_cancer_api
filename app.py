@@ -11,36 +11,16 @@ app = Flask(__name__)
 CORS(app)
 
 # ----------------------------
-# MODEL ARCHITECTURE (must match training)
+# LOAD MODEL (RENDER SAFE)
 # ----------------------------
-print("Loading model architecture...")
+MODEL_PATH = "colon_cancer_model_clean.keras"
 
-model = tf.keras.Sequential([
-    tf.keras.layers.Input(shape=(224, 224, 3)),
-    tf.keras.layers.Conv2D(32, (3, 3), activation="relu"),
-    tf.keras.layers.MaxPooling2D(),
+print("Loading model...")
 
-    tf.keras.layers.Conv2D(64, (3, 3), activation="relu"),
-    tf.keras.layers.MaxPooling2D(),
-
-    tf.keras.layers.Conv2D(128, (3, 3), activation="relu"),
-    tf.keras.layers.MaxPooling2D(),
-
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation="relu"),
-    tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(1, activation="sigmoid")
-])
-
-# ----------------------------
-# LOAD WEIGHTS
-# ----------------------------
-WEIGHTS_PATH = "weights.weights.h5"
-
-if not os.path.exists(WEIGHTS_PATH):
-    raise FileNotFoundError(f"Missing weights file: {WEIGHTS_PATH}")
-
-model.load_weights(WEIGHTS_PATH)
+model = tf.keras.models.load_model(
+    MODEL_PATH,
+    compile=False
+)
 
 print("Model loaded successfully!")
 
@@ -59,7 +39,7 @@ def preprocess_image(image):
 # ----------------------------
 @app.route("/")
 def home():
-    return "Colon Cancer API is running"
+    return "Colon Cancer API is running 🚀"
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -67,9 +47,9 @@ def predict():
         data = request.get_json()
 
         if not data or "image" not in data:
-            return jsonify({"error": "No image uploaded"}), 400
+            return jsonify({"error": "No image provided"}), 400
 
-        # Decode image
+        # Decode base64 image
         image_bytes = base64.b64decode(data["image"])
         image = Image.open(io.BytesIO(image_bytes))
 
@@ -77,34 +57,34 @@ def predict():
         img_array = preprocess_image(image)
 
         # Predict
-        prediction = model.predict(img_array, verbose=0)
-        cnn_prob = float(prediction[0][0])
+        prediction = model.predict(img_array, verbose=0)[0][0]
 
         # Decision logic
-        if cnn_prob > 0.5:
-            diagnosis = "adenocarcinoma"
-            confidence = cnn_prob
-            recommendation = "High risk detected. Immediate medical consultation recommended."
+        if prediction > 0.5:
+            result = "adenocarcinoma"
+            confidence = float(prediction)
+            recommendation = "High risk detected. Please consult a doctor immediately."
         else:
-            diagnosis = "normal"
-            confidence = 1 - cnn_prob
-            recommendation = "No signs of cancer detected. Routine monitoring advised."
+            result = "normal"
+            confidence = float(1 - prediction)
+            recommendation = "No cancer detected. Routine check recommended."
 
         return jsonify({
-            "predictionResult": diagnosis,
+            "predictionResult": result,
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probability_normal": round((1 - cnn_prob) * 100, 2),
-                "probability_cancer": round(cnn_prob * 100, 2)
+                "probability_normal": round((1 - prediction) * 100, 2),
+                "probability_cancer": round(prediction * 100, 2)
             }
         })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # ----------------------------
-# RUN SERVER (Render compatible)
+# RUN (RENDER COMPATIBLE)
 # ----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
