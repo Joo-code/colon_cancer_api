@@ -69,13 +69,13 @@ def predict():
         raw_prob = float(prediction[0][0])
 
         # Decision logic
-        if raw_prob > 0.5:
+        if raw_prob < 0.5:
             result = "adenocarcinoma"
-            confidence = raw_prob
+            confidence = 1.0 - raw_problem
             recommendation = "High risk detected. Please consult a doctor immediately."
         else:
             result = "normal"
-            confidence = 1.0 - raw_prob
+            confidence = raw_prob
             recommendation = "No cancer detected. Routine check recommended."
 
         # Compile JSON payload
