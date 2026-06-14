@@ -71,7 +71,7 @@ def predict():
         # Decision logic
         if raw_prob < 0.5:
             result = "adenocarcinoma"
-            confidence = 1.0 - raw_problem
+            confidence = 1.0 - raw_prob
             recommendation = "High risk detected. Please consult a doctor immediately."
         else:
             result = "normal"
