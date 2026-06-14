@@ -83,8 +83,8 @@ def predict():
 
         print(f"Raw Probability: {raw_prob}")
         print(f"Prediction Result: {result}")
-        print(f"Normal Probability: {probabilitu_normal}%")
-        print(f"Cancer Probability: {probabilitu_cancer}%")
+        print(f"Normal Probability: {probability_normal}%")
+        print(f"Cancer Probability: {probability_cancer}%")
 
 
         # Compile JSON payload
