@@ -15,7 +15,7 @@ CORS(app)
 # ----------------------------
 # LOAD MODEL (RENDER SAFE)
 # ----------------------------
-MODEL_PATH = "colon_cancer_model_clean.keras"
+MODEL_PATH = "colon_cancer_model.tflite"
 
 print("Loading model...")
 model = tf.keras.models.load_model(
