@@ -69,14 +69,14 @@ def predict():
         raw_prob = float(prediction[0][0])
 
         # Decision logic
-        if raw_prob < 0.5:
-            result = "adenocarcinoma"
-            confidence = 1.0 - raw_prob
-            recommendation = "High risk detected. Please consult a doctor immediately."
-        else:
+        if raw_prob >= 0.5:
             result = "normal"
             confidence = raw_prob
             recommendation = "No cancer detected. Routine check recommended."
+        else:
+            result = "adenocarcinoma"
+            confidence = 1.0 - raw_prob
+            recommendation = "High risk detected. Please consult a doctor immediately."
 
         probability_normal = round(raw_prob * 100, 2)
         probability_cancer = round((1.0 - raw_prob) * 100, 2)
