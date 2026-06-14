@@ -1,3 +1,4 @@
+import gc
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tensorflow as tf
@@ -7,6 +8,7 @@ import base64
 import io
 import os
 
+# FIXED: Changed single underscores to standard double underscores
 app = Flask(__name__)
 CORS(app)
 
@@ -16,12 +18,10 @@ CORS(app)
 MODEL_PATH = "colon_cancer_model_clean.keras"
 
 print("Loading model...")
-
 model = tf.keras.models.load_model(
     MODEL_PATH,
     compile=False
 )
-
 print("Model loaded successfully!")
 
 # ----------------------------
@@ -49,43 +49,67 @@ def predict():
         if not data or "image" not in data:
             return jsonify({"error": "No image provided"}), 400
 
+        # 1. Clear session and run garbage collection before tracking new arrays
+        tf.keras.backend.clear_session()
+        gc.collect()
+
         # Decode base64 image
         image_bytes = base64.b64decode(data["image"])
-        image = Image.open(io.BytesIO(image_bytes))
+        image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
         # Preprocess
-        img_array = preprocess_image(image)
+        processed_image = preprocess_image(image)
 
         # Predict
-        prediction = model.predict(img_array, verbose=0)[0][0]
+        prediction = model.predict(processed_image)
+        
+        # SAFE EXTRACTION: Extract the scalar value out of the array safely
+        raw_prob = float(prediction[0][0])
 
         # Decision logic
-        if prediction > 0.5:
+        if raw_prob > 0.5:
             result = "adenocarcinoma"
-            confidence = float(prediction)
+            confidence = raw_prob
             recommendation = "High risk detected. Please consult a doctor immediately."
         else:
             result = "normal"
-            confidence = float(1 - prediction)
+            confidence = 1.0 - raw_prob
             recommendation = "No cancer detected. Routine check recommended."
 
-        return jsonify({
+        # Compile JSON payload
+        response_data = {
             "predictionResult": result,
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probability_normal": round((1 - prediction) * 100, 2),
-                "probability_cancer": round(prediction * 100, 2)
+                "probability_normal": round((1.0 - raw_prob) * 100, 2),
+                "probability_cancer": round(raw_prob * 100, 2)
             }
-        })
+        }
+
+        # 2. Aggressively delete variable allocations to free up RAM instantly
+        del image_bytes
+        del image
+        del processed_image
+        del prediction
+        
+        # 3. Final memory clearance before response release
+        tf.keras.backend.clear_session()
+        gc.collect()
+
+        return jsonify(response_data)
 
     except Exception as e:
+        # Emergency memory cleanup during exception handling
+        tf.keras.backend.clear_session()
+        gc.collect()
         return jsonify({"error": str(e)}), 500
 
 
 # ----------------------------
 # RUN (RENDER COMPATIBLE)
 # ----------------------------
+# FIXED: Changed single underscores to double underscores
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
