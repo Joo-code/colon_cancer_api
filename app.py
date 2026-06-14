@@ -1,28 +1,29 @@
 import gc
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 import base64
 import io
 import os
+import tflite_runtime.interpreter as tflite
 
-# FIXED: Changed single underscores to standard double underscores
 app = Flask(__name__)
 CORS(app)
 
 # ----------------------------
-# LOAD MODEL (RENDER SAFE)
+# LOAD TF LITE MODEL
 # ----------------------------
 MODEL_PATH = "colon_cancer_model.tflite"
 
-print("Loading model...")
-model = tf.keras.models.load_model(
-    MODEL_PATH,
-    compile=False
-)
-print("Model loaded successfully!")
+print("Loading TF Lite model...")
+interpreter = tflite.Interpreter(model_path=MODEL_PATH)
+interpreter.allocate_tensors()
+
+# Dapatkan info input & output tensor
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+print("TF Lite Model loaded successfully!")
 
 # ----------------------------
 # IMAGE PREPROCESSING
@@ -49,8 +50,7 @@ def predict():
         if not data or "image" not in data:
             return jsonify({"error": "No image provided"}), 400
 
-        # 1. Clear session and run garbage collection before tracking new arrays
-        tf.keras.backend.clear_session()
+        # Bersihkan memori sebelum bermula
         gc.collect()
 
         # Decode base64 image
@@ -60,10 +60,12 @@ def predict():
         # Preprocess
         processed_image = preprocess_image(image)
 
-        # Predict
-        prediction = model.predict(processed_image)
+        # Predict menggunakan TF Lite Interpreter
+        interpreter.set_tensor(input_details[0]['index'], processed_image)
+        interpreter.invoke()
+        prediction = interpreter.get_tensor(output_details[0]['index'])
         
-        # SAFE EXTRACTION: Extract the scalar value out of the array safely
+        # SAFE EXTRACTION: Ekstrak nilai perpuluhan dengan selamat
         raw_prob = float(prediction[0][0])
 
         # Decision logic
@@ -87,21 +89,19 @@ def predict():
             }
         }
 
-        # 2. Aggressively delete variable allocations to free up RAM instantly
+        # Aggressively delete variable allocations to free up RAM instantly
         del image_bytes
         del image
         del processed_image
         del prediction
         
-        # 3. Final memory clearance before response release
-        tf.keras.backend.clear_session()
+        # Final memory clearance
         gc.collect()
 
         return jsonify(response_data)
 
     except Exception as e:
-        # Emergency memory cleanup during exception handling
-        tf.keras.backend.clear_session()
+        # Emergency memory cleanup
         gc.collect()
         return jsonify({"error": str(e)}), 500
 
@@ -109,7 +109,6 @@ def predict():
 # ----------------------------
 # RUN (RENDER COMPATIBLE)
 # ----------------------------
-# FIXED: Changed single underscores to double underscores
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
