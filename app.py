@@ -84,8 +84,8 @@ def predict():
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probability_normal": round((1.0 - raw_prob) * 100, 2),
-                "probability_cancer": round(raw_prob * 100, 2)
+                "probability_normal": round((raw_prob) * 100, 2),
+                "probability_cancer": round(1.0 - raw_prob * 100, 2)
             }
         }
 
