@@ -12,7 +12,7 @@ CORS(app)
 model = None
 
 print("Loading model...")
-model = tf.keras.models.load_model("colon_cancer_model_fixed.h5", compile=False)
+model = tf.keras.models.load_model("colon_cancer_model_fixed.keras", compile=False)
 print("Model loaded successfully!")
 
 def preprocess_image(image):
