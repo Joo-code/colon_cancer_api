@@ -68,14 +68,16 @@ def predict():
         # SAFE EXTRACTION: Ekstrak nilai perpuluhan dengan selamat
         raw_prob = float(prediction[0][0])
 
-        # Decision logic
-        if raw_prob >= 0.5:
+        prob_normal = raw_prob
+        prob_cancer = 1.0 - raw_prob
+
+        if prob_normal >= prob_cancer:
             result = "normal"
-            confidence = raw_prob
+            confidence = prob_normal
             recommendation = "No cancer detected. Routine check recommended."
         else:
             result = "adenocarcinoma"
-            confidence = 1.0 - raw_prob
+            confidence = prob_cancer
             recommendation = "High risk detected. Please consult a doctor immediately."
 
         probability_normal = round(raw_prob * 100, 2)
