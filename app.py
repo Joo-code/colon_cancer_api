@@ -78,14 +78,23 @@ def predict():
             confidence = raw_prob
             recommendation = "No cancer detected. Routine check recommended."
 
+        probability_normal = round(raw_prob * 100, 2)
+        probability_cancer = round((1.0 - raw_prob) * 100, 2)
+
+        print(f"Raw Probability: {raw_prob}")
+        print(f"Prediction Result: {result}")
+        print(f"Normal Probability: {probabilitu_normal}%")
+        print(f"Cancer Probability: {probabilitu_cancer}%")
+
+
         # Compile JSON payload
         response_data = {
             "predictionResult": result,
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probability_normal": round((raw_prob) * 100, 2),
-                "probability_cancer": round(1.0 - raw_prob * 100, 2)
+                "probability_normal": probability_normal,
+                "probability_cancer": probability_cancer
             }
         }
 
