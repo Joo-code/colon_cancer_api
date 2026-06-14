@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: colon-cancer-api
-    env: python
-    plan: free
-    region: singapore
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app

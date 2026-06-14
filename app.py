@@ -9,6 +9,8 @@ import io
 app = Flask(__name__)
 CORS(app)
 
+model = None
+
 print("Loading model...")
 model = tf.keras.models.load_model("colon_cancer_model_final.keras")
 print("Model loaded successfully!")
@@ -28,8 +30,9 @@ def home():
 def predict():
 
     try:
-        data = request.json
-        if "image" not in data:
+        data = request.get_json()
+
+        if not data or "image" not in data:
             return jsonify({"error": "No image uploaded"}), 400
 
         image_bytes = base64.b64decode(data["image"])
@@ -37,7 +40,8 @@ def predict():
 
         img_array = preprocess_image(image)
 
-        cnn_prob = float(model.predict(img_array)[0][0])
+        prediction = model.predict(img_array, verbose=0)
+        cnn_prob = float(prediction[0][0])
 
         if cnn_prob > 0.5:
             diagnosis = "adenocarcinoma"
@@ -64,4 +68,5 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
