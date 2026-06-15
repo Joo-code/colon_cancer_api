@@ -63,7 +63,7 @@ def calculate_clinical_risk(
     except:
         bmi = 0
 
-    symptoms = symptpms.lower()
+    symptoms = symptoms.lower()
 
     if "blood" in symptoms:
         risk += 0.25
