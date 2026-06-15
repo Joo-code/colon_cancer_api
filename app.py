@@ -172,8 +172,16 @@ def predict():
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probablity_normal": round((1 - final_score) * 100, 2),
-                "probability_cancer": round(final_score * 100, 2)
+                "chart": [
+                    {
+                        "name": "Normal",
+                        "value": round((1-final_score) * 100, 2)
+                    },
+                    {
+                        "name": "Adenocarcinoma",
+                        "value": round(final_score* 100, 2)
+                    }
+                ]
             }
         }
 
