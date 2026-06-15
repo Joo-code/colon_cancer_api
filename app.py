@@ -158,16 +158,16 @@ def predict():
         final_score = (0.8 * cancer_probability) + (0.2 * clinical_risk)
 
         # Result
-        if final_score >= 0.5:
+        if final_score >= 0.6:
             result         = "adenocarcinoma"
-            confidence     = final_score
+            confidence     = cancer_probability  # raw CNN confidence
             recommendation = (
                 "High risk detected. Please consult a doctor immediately. "
                 "Early diagnosis significantly improves treatment outcomes."
             )
         else:
             result         = "normal"
-            confidence     = 1.0 - final_score
+            confidence     = normal_probability  # raw CNN confidence
             recommendation = (
                 "No cancer detected. Routine screening recommended. "
                 "Continue regular health check-ups."
@@ -181,11 +181,11 @@ def predict():
 
         response_data = {
             "predictionResult":     result,
-            "predictionConfidence": round(confidence * 100, 2),
+            "predictionConfidence": f"{round(confidence * 100, 2)}%",
             "recommendation":       recommendation,
             "visualization": {
-                "probability_normal": round((1.0 - final_score) * 100, 2),
-                "probability_cancer": round(final_score * 100, 2)
+                "probability_normal": f"{round((1.0 - final_score) * 100, 2)}%",
+                "probability_cancer": f"{round(final_score * 100, 2)}%"
             },
             "model_metrics": {
                 "accuracy": MODEL_METRICS["accuracy"],
