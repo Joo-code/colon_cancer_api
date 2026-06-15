@@ -172,17 +172,9 @@ def predict():
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "chart": [
-                    {
-                        "name": "Normal",
-                        "value": round((1-final_score) * 100, 2)
-                    },
-                    {
-                        "name": "Adenocarcinoma",
-                        "value": round(final_score* 100, 2)
+                        "probability_normal": round((1-final_score) * 100, 2)
+                        "probability_cancer": round(final_score* 100, 2)
                     }
-                ]
-            }
         }
 
         # Aggressively delete variable allocations to free up RAM instantly
