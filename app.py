@@ -7,11 +7,8 @@ import base64
 import io
 import os
 
-try:
-    import tflite_runtime.interpreter as tflite
-except ImportError:
-    import tensorflow as tf
-    tflite = tf.lite
+import tensorflow as tf
+tflite = tf.lite
 
 app = Flask(__name__)
 CORS(app)
