@@ -36,6 +36,47 @@ def preprocess_image(image):
     return img_array
 
 # ----------------------------
+# CLINICAL RISK
+# ----------------------------
+def calculate_clinical_risk(
+    age,
+    height,
+    weight,
+    family_history,
+    symptoms
+):
+
+    risk = 0.0
+
+    if age > 60:
+        risk += 0.10
+
+    if family_history == 1:
+        risk += 0.15
+
+    try:
+        bmi = weight /((height/100) **2)
+
+        if bmi >= 30:
+            risk += 0.10
+
+    except:
+        bmi = 0
+
+    symptoms = symptpms.lower()
+
+    if "blood" in symptoms:
+        risk += 0.25
+
+    if "weight loss" in symptoms:
+        risk += 0.15
+
+    if "abdominal pain" in symptoms:
+        risk += 0.10
+
+    return min(risk, 1.0)
+
+# ----------------------------
 # ROUTES
 # ----------------------------
 @app.route("/")
@@ -47,11 +88,32 @@ def predict():
     try:
         data = request.get_json()
 
-        if not data or "image" not in data:
-            return jsonify({"error": "No image provided"}), 400
+        if not data:
+            return jsonify({
+                "error": "No data provided"
+            }), 400
+        
+        if "image" not in data:
+            return jsonify({
+                "error": "No image provided"
+            }), 400
 
         # Bersihkan memori sebelum bermula
         gc.collect()
+
+        age = int(data.get("age", 0))
+
+        height = float(data.get("height", 0))
+
+        weight = float(data.get("weight", 0))
+
+        family_history = int(
+            data.get("family_history", 0)
+        )
+
+        symptoms = str(
+            data.get("symptoms", "")
+        )
 
         # Decode base64 image
         image_bytes = base64.b64decode(data["image"])
@@ -68,25 +130,38 @@ def predict():
         # SAFE EXTRACTION: Ekstrak nilai perpuluhan dengan selamat
         raw_prob = float(prediction[0][0])
 
-        prob_normal = raw_prob
-        prob_cancer = 1.0 - raw_prob
+        normal_probability = raw_prob
 
-        if prob_normal >= prob_cancer:
-            result = "normal"
-            confidence = prob_normal
-            recommendation = "No cancer detected. Routine check recommended."
-        else:
+        cancer_probability = ( 1.0 - raw_prob)
+
+        clinical_risk = (
+            calculate_clinical_risk(
+                age,
+                height,
+                weight,
+                family_history,
+                symptoms
+            )
+        )
+
+        final_score = (
+            (0.8 * cnn_prob) + (0.2 * clinical_risk)
+        )
+
+        if final_score >= 0.5:
             result = "adenocarcinoma"
-            confidence = prob_cancer
+            confidence = final_score
             recommendation = "High risk detected. Please consult a doctor immediately."
+        else:
+            result = "normal"
+            confidence = (1.0 - final_score)
+            recommendation = "No cancer detected. Routine check recommended."
 
-        probability_normal = round(raw_prob * 100, 2)
-        probability_cancer = round((1.0 - raw_prob) * 100, 2)
-
-        print(f"Raw Probability: {raw_prob}")
-        print(f"Prediction Result: {result}")
-        print(f"Normal Probability: {probability_normal}%")
-        print(f"Cancer Probability: {probability_cancer}%")
+        print(f"CNN Normal: {normal_probability: .4f}")
+        print(f"CNN Cancer: {cancer_probability:.4f}")
+        print(f"Clinical Risk: {clinical_risk:.4f}")
+        print(f"Final Score: {final_score:.4f}")
+        print(f"Prediction: {result}")
 
 
         # Compile JSON payload
@@ -95,8 +170,8 @@ def predict():
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation": recommendation,
             "visualization": {
-                "probability_normal": probability_normal,
-                "probability_cancer": probability_cancer
+                "probablity_normal": round((1 - final_score) * 100, 2),
+                "probability_cancer": round(final_score * 100, 2)
             }
         }
 
