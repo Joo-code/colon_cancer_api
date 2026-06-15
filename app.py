@@ -134,6 +134,8 @@ def predict():
 
         cancer_probability = ( 1.0 - raw_prob)
 
+        cnn_prob = cancer_probability
+
         clinical_risk = (
             calculate_clinical_risk(
                 age,
