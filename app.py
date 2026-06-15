@@ -160,14 +160,14 @@ def predict():
         # Result
         if final_score >= 0.6:
             result         = "adenocarcinoma"
-            confidence     = cancer_probability  # raw CNN confidence
+            confidence     = final_score
             recommendation = (
                 "High risk detected. Please consult a doctor immediately. "
                 "Early diagnosis significantly improves treatment outcomes."
             )
         else:
             result         = "normal"
-            confidence     = normal_probability  # raw CNN confidence
+            confidence     = 1.0 - final_score
             recommendation = (
                 "No cancer detected. Routine screening recommended. "
                 "Continue regular health check-ups."
