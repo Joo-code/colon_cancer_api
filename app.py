@@ -184,8 +184,8 @@ def predict():
             "predictionConfidence": round(confidence * 100, 2),
             "recommendation":       recommendation,
             "visualization": {
-                "probability_normal": round(normal_probability * 100, 2),
-                "probability_cancer": round(cancer_probability * 100, 2)
+                "probability_normal": round((1.0 - final_score) * 100, 2),
+                "probability_cancer": round(final_score * 100, 2)
             },
             "model_metrics": {
                 "accuracy": MODEL_METRICS["accuracy"],
