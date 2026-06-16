@@ -83,12 +83,41 @@ def calculate_clinical_risk(age, height, weight, family_history, symptoms):
 
     symptoms = symptoms.lower()
 
-    if "blood" in symptoms:
+    # Blood in stool — multiple variations
+    if any(word in symptoms for word in [
+        "blood", "bleeding", "bloody", "rectal bleeding",
+        "hematochezia", "melena", "dark stool", "darah"
+    ]):
         risk += 0.25
-    if "weight loss" in symptoms:
+
+    # Weight loss — multiple variations
+    if any(word in symptoms for word in [
+        "weight loss", "loss of weight", "losing weight",
+        "lost weight", "weight reduce", "berat badan turun",
+        "loss weight", "penurunan berat"
+    ]):
         risk += 0.15
-    if "abdominal pain" in symptoms:
+
+    # Abdominal pain — multiple variations
+    if any(word in symptoms for word in [
+        "abdominal pain", "stomach pain", "belly pain",
+        "abdominal", "stomach ache", "sakit perut",
+        "cramp", "cramping"
+    ]):
         risk += 0.10
+
+    # Bowel changes
+    if any(word in symptoms for word in [
+        "diarrhea", "constipation", "bowel", "stool change",
+        "irregular bowel", "cirit birit", "sembelit"
+    ]):
+        risk += 0.10
+
+    # Fatigue
+    if any(word in symptoms for word in [
+        "fatigue", "tired", "weakness", "lethargy", "penat", "lemah"
+    ]):
+        risk += 0.05
 
     return min(risk, 1.0)
 
